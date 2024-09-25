@@ -1,6 +1,8 @@
 #include "GameModes/Gameplay/BaseGameplayGM.h"
 
+#include "GameActors/Gates.h"
 #include "GameFramework/PlayerStart.h"
+#include "GameStates/GameplayState.h"
 #include "Kismet/GameplayStatics.h"
 
 APawn* ABaseGameplayGM::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer,
@@ -41,4 +43,79 @@ AActor* ABaseGameplayGM::ChoosePlayerStart_Implementation(AController* Player)
 	}
 
 	return nullptr;
+}
+
+
+void ABaseGameplayGM::BeginPlay()
+{
+    Super::BeginPlay();
+
+	CurrentGameState = GetGameState<AGameplayState>();
+	
+    TArray<AActor*> FoundGates;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGates::StaticClass(), FoundGates);
+
+    for (AActor* Actor : FoundGates)
+    {
+        AGates* Gate = Cast<AGates>(Actor);
+        if (Gate)
+        {
+            Gates.Add(Gate);
+        	
+            Gate->OnBallEnter.BindDynamic(this, &ABaseGameplayGM::OnGoalScored);
+        }
+    }
+}
+
+void ABaseGameplayGM::Multicast_PlayerJoined_Implementation(APlayerController* NewPlayer)
+{
+	++JoinedPlayers;
+	
+	if (JoinedPlayers >= TargetPlayerCount)
+	{
+		CurrentGameState->Server_GameStarted();
+		Server_SpawnBallInCenter();
+	}
+}
+
+void ABaseGameplayGM::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+
+    Multicast_PlayerJoined(NewPlayer);
+}
+
+void ABaseGameplayGM::SpawnBallInCenter()
+{
+    if (IsValid(BallClass))
+    {
+        if (IsValid(SpawnedBall))
+        {
+            SpawnedBall->Destroy();
+        }
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+    	
+        const FVector SpawnLocation = FVector(0.0f, 0.0f, 400.0f); 
+        const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+        SpawnedBall = GetWorld()->SpawnActor<AActor>(BallClass, SpawnLocation, SpawnRotation, SpawnParams);
+    }
+}
+
+void ABaseGameplayGM::Server_SpawnBallInCenter_Implementation()
+{
+	Multicast_SpawnBallInCenter();
+}
+
+void ABaseGameplayGM::Multicast_SpawnBallInCenter_Implementation()
+{
+	SpawnBallInCenter();
+}
+
+void ABaseGameplayGM::OnGoalScored(int32 GateIndex)
+{
+	CurrentGameState->Server_UpdateScore(GateIndex);
+	SpawnBallInCenter();
 }
