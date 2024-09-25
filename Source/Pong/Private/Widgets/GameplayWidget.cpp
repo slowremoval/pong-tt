@@ -29,7 +29,7 @@ void UGameplayWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	UpdateMessage(TEXT("Waiting for the second player..."));
+	UpdateMessage(TEXT("Waiting for the opponent..."));
 
 	InitializeBindings();
 }

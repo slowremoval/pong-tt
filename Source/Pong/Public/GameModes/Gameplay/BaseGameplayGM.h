@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -14,55 +12,51 @@ UCLASS()
 class PONG_API ABaseGameplayGM : public AGameModeBase
 {
 	GENERATED_BODY()
-protected:
-	TArray<AActor*> UsedPlayerStarts;
-	int32 JoinedPlayers;
-	bool bGameStarted;
 	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GameState")
 	TObjectPtr<AGameplayState> CurrentGameState;
-
-public:
-	int32 GetJoinedPlayers() const
-	{
-		return JoinedPlayers;
-	}
-
-	bool GetGameStarted() const
-	{
-		return bGameStarted;
-	}
-
-protected:
-	const int32 TargetPlayerCount {2};
-
-public:
-	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
-	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
-
-	virtual void PostLogin(APlayerController* NewPlayer) override;
-	void SpawnBallInCenter();
-
-	virtual void BeginPlay() override;
-	
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayerJoined(APlayerController* NewPlayer);
-
-	FOnGateTriggered OnGateTriggered;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gates")
 	TArray<class AGates*> Gates;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball")
+	TObjectPtr<AActor> SpawnedBall;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ball")
 	TSubclassOf<AActor> BallClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball")
-	TObjectPtr<AActor>SpawnedBall;
+	UPROPERTY(EditDefaultsOnly, Category = "Game Settings")
+	int32 TargetPlayerCount = 2;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Settings")
+	int32 JoinedPlayers = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+	bool bGameStarted = false;
+
+	TArray<AActor*> UsedPlayerStarts;
+
+public:
+	FOnGateTriggered OnGateTriggered;
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
+
+	virtual void BeginPlay() override;
+
+	void SpawnBallInCenter();
+
+protected:
 	UFUNCTION(Server, Reliable)
 	void Server_SpawnBallInCenter();
-	
+
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SpawnBallInCenter();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayerJoined(APlayerController* NewPlayer);
 
 	UFUNCTION()
 	void OnGoalScored(int32 GateIndex);
