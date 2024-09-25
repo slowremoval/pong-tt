@@ -6,8 +6,6 @@
 
 class AGameplayState;
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnGateTriggered, int32, GateIndex);
-
 UCLASS()
 class PONG_API ABaseGameplayGM : public AGameModeBase
 {
@@ -38,8 +36,6 @@ protected:
 	TArray<AActor*> UsedPlayerStarts;
 
 public:
-	FOnGateTriggered OnGateTriggered;
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;

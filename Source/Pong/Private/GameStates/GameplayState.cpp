@@ -20,7 +20,10 @@ void AGameplayState::UpdateScore(int32 GateIndex)
 	int32& Score = GateScores.FindOrAdd(GateIndex);
 	Score++;
 
-	ScoreUpdatedDelegate.Broadcast(GateIndex, Score);
+	if (ScoreUpdatedDelegate.IsBound())
+	{
+		ScoreUpdatedDelegate.Broadcast(GateIndex, Score);
+	}
 }
 
 void AGameplayState::Server_UpdateScore_Implementation(int32 GateIndex)
@@ -54,6 +57,9 @@ void AGameplayState::Multicast_GameStarted_Implementation()
 	if (!bGameStarted)
 	{
 		bGameStarted = true;
-		GameStartedDelegate.Broadcast();
+		if (GameStartedDelegate.IsBound())
+		{
+			GameStartedDelegate.Broadcast();
+		}
 	}
 }

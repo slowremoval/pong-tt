@@ -25,7 +25,10 @@ void AGates::Server_HandleBallEnterGate_Implementation(int32 Index)
 
 void AGates::Multicast_HandleBallEnterGate_Implementation(int32 Index)
 {
-	OnBallEnter.Execute(Index);
+	if (OnBallEnter.IsBound())
+	{
+		OnBallEnter.Execute(Index);
+	}
 }
 
 void AGates::OnGateBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
