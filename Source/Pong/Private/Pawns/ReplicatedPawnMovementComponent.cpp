@@ -4,13 +4,14 @@ DEFINE_LOG_CATEGORY(LogReplicatedPawnMovementComponent);
 
 void UReplicatedPawnMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
 {
+	FVector InputVector = FVector(WorldVector.Y, WorldVector.X, 0);
 	if (IsRunningDedicatedServer())
 	{
-		Super::AddInputVector(WorldVector, bForce);
+		Super::AddInputVector(InputVector, bForce);
 	}
 	else
 	{
-		Server_SetMovement(WorldVector, bForce);
+		Server_SetMovement(InputVector, bForce);
 	}
 }
 

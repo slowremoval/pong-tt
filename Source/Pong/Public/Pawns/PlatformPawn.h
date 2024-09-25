@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "PlatformPawn.generated.h"
 
+class UCameraComponent;
+class USpringArmComponent;
 class APlatformPC;
 class UReplicatedPawnMovementComponent;
 
@@ -17,7 +19,8 @@ class PONG_API APlatformPawn : public APawn
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UReplicatedPawnMovementComponent> PlatformMovementComponent;
-	
+	FVector CameraWorldLocation;
+
 public:
 	APlatformPawn();
 
@@ -27,5 +30,11 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* SpringArm;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* CameraComponent;
 };
