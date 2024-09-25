@@ -31,8 +31,7 @@ AReplicatedBall::AReplicatedBall()
 
     BallSpeed = 3900.0f;
     InterpolationSpeed = 7.0f;
-    
-    
+
     TargetPosition = FVector::ZeroVector;
 
     UE_LOG(LogReplicatedBall, Log, TEXT("AReplicatedBall Constructor: Ball Initialized with Velocity: %s"), *BallVelocity.ToString());
@@ -67,9 +66,7 @@ void AReplicatedBall::Tick(float DeltaTime)
 
         BallVelocity = Velocity;
 
-        Multicast_SetBallPositionAndVelocity(GetActorLocation(), BallVelocity);
-
-       //UE_LOG(LogReplicatedBall, Log, TEXT("Tick: Server updating ball position: %s, velocity: %s"), *GetActorLocation().ToString(), *BallVelocity.ToString());
+        Multicast_SetBallState(GetActorLocation(), BallVelocity);
     }
     else
     {
@@ -103,7 +100,7 @@ void AReplicatedBall::OnBallHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 
         BallMesh->SetPhysicsLinearVelocity(BallVelocity);
 
-        Multicast_SetBallVelocity(BallVelocity);
+        Multicast_SetBallState(GetActorLocation(), BallVelocity);
 
         UE_LOG(LogReplicatedBall, Log, TEXT("OnBallHit: Ball hit something. New Velocity: %s"), *BallVelocity.ToString());
     }
@@ -115,18 +112,12 @@ void AReplicatedBall::OnRep_BallVelocity()
     UE_LOG(LogReplicatedBall, Log, TEXT("OnRep_BallVelocity: Client updated ball velocity: %s"), *BallVelocity.ToString());
 }
 
-void AReplicatedBall::Multicast_SetBallVelocity_Implementation(const FVector& NewVelocity)
-{
-    SetBallVelocityLocally(NewVelocity);
-    UE_LOG(LogReplicatedBall, Log, TEXT("Multicast_SetBallVelocity: Velocity replicated to clients: %s"), *NewVelocity.ToString());
-}
-
-void AReplicatedBall::Multicast_SetBallPositionAndVelocity_Implementation(const FVector& NewLocation, const FVector& NewVelocity)
+void AReplicatedBall::Multicast_SetBallState_Implementation(const FVector& NewLocation, const FVector& NewVelocity)
 {
     TargetPosition = NewLocation;
-
     SetBallVelocityLocally(NewVelocity);
-    UE_LOG(LogReplicatedBall, Log, TEXT("Multicast_SetBallPositionAndVelocity: Position and velocity replicated. Target Position: %s, New Velocity: %s"), *NewLocation.ToString(), *NewVelocity.ToString());
+    
+    UE_LOG(LogReplicatedBall, Log, TEXT("Multicast_SetBallState: Position and Velocity updated. Target Position: %s, New Velocity: %s"), *NewLocation.ToString(), *NewVelocity.ToString());
 }
 
 void AReplicatedBall::SetBallVelocityLocally(const FVector& NewVelocity)

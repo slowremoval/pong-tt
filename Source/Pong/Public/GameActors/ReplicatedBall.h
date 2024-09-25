@@ -12,7 +12,6 @@ class PONG_API AReplicatedBall : public AActor
 	GENERATED_BODY()
 
 public:
-	void RandomizeBallInitialVelocity();
 	AReplicatedBall();
 
 protected:
@@ -31,7 +30,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	UFUNCTION()
 	void OnRep_BallVelocity();
 
@@ -45,12 +44,11 @@ private:
 	FVector TargetPosition;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_SetBallVelocity(const FVector& NewVelocity);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_SetBallPositionAndVelocity(const FVector& NewLocation, const FVector& NewVelocity);
+	void Multicast_SetBallState(const FVector& NewLocation, const FVector& NewVelocity);
 
 	void InterpolatePosition(float DeltaTime);
 
 	void SetBallVelocityLocally(const FVector& NewVelocity);
+	
+	void RandomizeBallInitialVelocity();
 };
