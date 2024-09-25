@@ -19,7 +19,7 @@ void UGameplayWidget::InitializeBindings()
 
 void UGameplayWidget::CheckIfGameStarted()
 {
-	if (GameState->GetGameStarted())
+	if (GameState->IsGameStarted())
 	{
 		HandleGameStarted();
 	}
