@@ -6,7 +6,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStarted);
 
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnScoreUpdated, int32, GateIndex, int32, NewScore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnScoreUpdated, int32, GateIndex, int32, NewScore);
 
 UCLASS()
 class PONG_API AGameplayState : public AGameStateBase
@@ -26,12 +26,7 @@ private:
 	void UpdateScore(int32 GateIndex);
 	
 	
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateScore(int32 GateIndex);
 
-	
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_GameStarted();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
@@ -43,8 +38,11 @@ public:
 
 	bool GetGameStarted();
 
-	UFUNCTION(Server, Reliable)
-	void Server_GameStarted();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateScore(int32 GateIndex);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_GameStarted();
 	
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateScore(int32 GateIndex);

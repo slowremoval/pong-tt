@@ -10,15 +10,13 @@ AGameplayState::AGameplayState()
 
 void AGameplayState::UpdateScore(int32 GateIndex)
 {
-	if (GateScores.Contains(GateIndex))
+	if (!GateScores.Contains(GateIndex))
 	{
-		++GateScores[GateIndex];
-
-		if (ScoreUpdatedDelegate.IsBound())
-		{
-			ScoreUpdatedDelegate.Execute(GateIndex, GateScores[GateIndex]);
-		}
+		GateScores.Add(GateIndex);
 	}
+	++GateScores[GateIndex];
+
+	ScoreUpdatedDelegate.Broadcast(GateIndex, GateScores[GateIndex]);
 }
 
 bool AGameplayState::GetGameStarted()
@@ -31,7 +29,7 @@ bool AGameplayState::GetGameStarted()
 
 		if (FoundPawns.Num() > 0)
 		{
-			Server_GameStarted();
+			Multicast_GameStarted();
 			return true;
 		}
 	}
@@ -43,12 +41,6 @@ void AGameplayState::Multicast_GameStarted_Implementation()
 {
 	bGameStarted = true;
 	GameStartedDelegate.Broadcast();
-}
-
-void AGameplayState::Server_GameStarted_Implementation()
-{
-	bGameStarted = true;
-	Multicast_GameStarted();
 }
 
 void AGameplayState::Multicast_UpdateScore_Implementation(int32 GateIndex)
@@ -67,5 +59,5 @@ int32 AGameplayState::GetScore(int32 GateIndex) const
 	{
 		return *GateScores.Find(GateIndex);
 	}
-	return -1;
+	return 0;
 }

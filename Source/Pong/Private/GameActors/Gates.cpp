@@ -32,6 +32,6 @@ void AGates::OnGateBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Oth
 {
 	if (OtherActor && OtherActor->IsA(AReplicatedBall::StaticClass()))
 	{
-		Server_HandleBallEnterGate(GateIndex);
+		Multicast_HandleBallEnterGate(GateIndex);
 	}
 }

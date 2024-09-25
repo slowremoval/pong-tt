@@ -73,7 +73,7 @@ void ABaseGameplayGM::Multicast_PlayerJoined_Implementation(APlayerController* N
 	
 	if (JoinedPlayers >= TargetPlayerCount)
 	{
-		CurrentGameState->Server_GameStarted();
+		CurrentGameState->Multicast_GameStarted();
 		Server_SpawnBallInCenter();
 	}
 }
@@ -82,7 +82,6 @@ void ABaseGameplayGM::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-		CurrentGameState->Server_GameStarted();
     Multicast_PlayerJoined(NewPlayer);
 }
 
@@ -108,7 +107,6 @@ void ABaseGameplayGM::SpawnBallInCenter()
 void ABaseGameplayGM::Server_SpawnBallInCenter_Implementation()
 {
 	Multicast_SpawnBallInCenter();
-	CurrentGameState->Server_GameStarted();
 }
 
 void ABaseGameplayGM::Multicast_SpawnBallInCenter_Implementation()
@@ -118,6 +116,6 @@ void ABaseGameplayGM::Multicast_SpawnBallInCenter_Implementation()
 
 void ABaseGameplayGM::OnGoalScored(int32 GateIndex)
 {
-	CurrentGameState->Server_UpdateScore(GateIndex);
+	CurrentGameState->Multicast_UpdateScore(GateIndex);
 	SpawnBallInCenter();
 }
