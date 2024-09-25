@@ -25,7 +25,7 @@ void AReplicatedBall::RandomizeBallInitialVelocity()
 
 	BallVelocity = RandomizedDirection.GetSafeNormal() * BallSpeed;
 
-	UE_LOG(LogTemp, Log, TEXT("Ball initial velocity randomized: %s"), *BallVelocity.ToString());
+	UE_LOG(LogReplicatedBall, Log, TEXT("Ball initial velocity randomized: %s"), *BallVelocity.ToString());
 }
 
 AReplicatedBall::AReplicatedBall()
