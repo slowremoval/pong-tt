@@ -16,25 +16,25 @@ class PONG_API APlatformPawn : public APawn
 {
 	GENERATED_BODY()
 	
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UReplicatedPawnMovementComponent> PlatformMovementComponent;
-	FVector CameraWorldLocation;
-
 public:
 	APlatformPawn();
 
 	virtual void Tick(float DeltaSeconds) override;
-	
+
 	void Move(FVector MovementInput);
-	
+
 protected:
 	virtual void BeginPlay() override;
-	
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* SpringArm;
+	TObjectPtr<UReplicatedPawnMovementComponent> PlatformMovementComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* CameraComponent;
+	TObjectPtr<UCameraComponent> CameraComponent;
+	
+	UPROPERTY(EditAnywhere, Category = "Movement Boundaries", meta = (ClampMin = -5000, ClampMax = 5000))
+	float MovementBoundary = 1700.0f;
+
+	void ClampMovement(FVector& NewLocation);
 };
