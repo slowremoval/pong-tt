@@ -12,22 +12,26 @@ class PONG_API AReplicatedBall : public AActor
 	GENERATED_BODY()
 
 public:
+	void RandomizeBallInitialVelocity();
 	AReplicatedBall();
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
 	float BallSpeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball", ReplicatedUsing = OnRep_BallVelocity)
 	FVector BallVelocity;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
+	float InterpolationSpeed;
+	
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	UFUNCTION()
 	void OnRep_BallVelocity();
 
@@ -38,12 +42,15 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* BallMesh;
 
+	FVector TargetPosition;
+
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetBallVelocity(const FVector& NewVelocity);
 
-	void SetBallVelocityLocally(const FVector& NewVelocity);
-
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetBallPositionAndVelocity(const FVector& NewLocation, const FVector& NewVelocity);
-	
+
+	void InterpolatePosition(float DeltaTime);
+
+	void SetBallVelocityLocally(const FVector& NewVelocity);
 };

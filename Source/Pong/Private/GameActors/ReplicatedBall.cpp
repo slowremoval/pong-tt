@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GameActors/ReplicatedBall.h"
 
 #include "Kismet/KismetMathLibrary.h"
@@ -8,6 +5,15 @@
 
 
 DEFINE_LOG_CATEGORY_STATIC(LogReplicatedBall, Log, All);
+
+void AReplicatedBall::RandomizeBallInitialVelocity()
+{
+    float RandomAngle = FMath::RandRange(0.0f, 2 * PI);
+    float XDirection = FMath::Cos(RandomAngle);
+    float YDirection = FMath::Sin(RandomAngle);
+
+    BallVelocity = FVector(XDirection, YDirection, 0.0f).GetSafeNormal() * BallSpeed;
+}
 
 AReplicatedBall::AReplicatedBall()
 {
@@ -24,8 +30,10 @@ AReplicatedBall::AReplicatedBall()
     BallMesh->OnComponentHit.AddDynamic(this, &AReplicatedBall::OnBallHit);
 
     BallSpeed = 3900.0f;
-
-    BallVelocity = FVector(BallSpeed, 0.0f, 0.0f);
+    InterpolationSpeed = 7.0f;
+    
+    
+    TargetPosition = FVector::ZeroVector;
 
     UE_LOG(LogReplicatedBall, Log, TEXT("AReplicatedBall Constructor: Ball Initialized with Velocity: %s"), *BallVelocity.ToString());
 }
@@ -34,6 +42,8 @@ void AReplicatedBall::BeginPlay()
 {
     Super::BeginPlay();
 
+    RandomizeBallInitialVelocity();
+    
     if (HasAuthority())
     {
         BallMesh->SetPhysicsLinearVelocity(BallVelocity);
@@ -59,11 +69,23 @@ void AReplicatedBall::Tick(float DeltaTime)
 
         Multicast_SetBallPositionAndVelocity(GetActorLocation(), BallVelocity);
 
-        UE_LOG(LogReplicatedBall, Log, TEXT("Tick: Server updating ball position: %s, velocity: %s"), *GetActorLocation().ToString(), *BallVelocity.ToString());
+       //UE_LOG(LogReplicatedBall, Log, TEXT("Tick: Server updating ball position: %s, velocity: %s"), *GetActorLocation().ToString(), *BallVelocity.ToString());
     }
     else
     {
-        UE_LOG(LogReplicatedBall, Verbose, TEXT("Tick: Client receiving ball updates from server."));
+        InterpolatePosition(DeltaTime);
+    }
+}
+
+void AReplicatedBall::InterpolatePosition(float DeltaTime)
+{
+    if (!TargetPosition.IsZero())
+    {
+        FVector CurrentLocation = GetActorLocation();
+        FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetPosition, DeltaTime, InterpolationSpeed);
+
+        SetActorLocation(NewLocation);
+        UE_LOG(LogReplicatedBall, Verbose, TEXT("Client Interpolating Position: %s -> %s"), *CurrentLocation.ToString(), *NewLocation.ToString());
     }
 }
 
@@ -101,9 +123,10 @@ void AReplicatedBall::Multicast_SetBallVelocity_Implementation(const FVector& Ne
 
 void AReplicatedBall::Multicast_SetBallPositionAndVelocity_Implementation(const FVector& NewLocation, const FVector& NewVelocity)
 {
-    SetActorLocation(NewLocation);
+    TargetPosition = NewLocation;
+
     SetBallVelocityLocally(NewVelocity);
-    UE_LOG(LogReplicatedBall, Log, TEXT("Multicast_SetBallPositionAndVelocity: Position and velocity replicated. New Position: %s, New Velocity: %s"), *NewLocation.ToString(), *NewVelocity.ToString());
+    UE_LOG(LogReplicatedBall, Log, TEXT("Multicast_SetBallPositionAndVelocity: Position and velocity replicated. Target Position: %s, New Velocity: %s"), *NewLocation.ToString(), *NewVelocity.ToString());
 }
 
 void AReplicatedBall::SetBallVelocityLocally(const FVector& NewVelocity)
