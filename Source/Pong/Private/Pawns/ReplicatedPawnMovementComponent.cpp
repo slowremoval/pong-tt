@@ -4,7 +4,15 @@ DEFINE_LOG_CATEGORY(LogReplicatedPawnMovementComponent);
 
 void UReplicatedPawnMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
 {
-	FVector InputVector = FVector(WorldVector.Y, WorldVector.X, 0);
+
+	const FVector ForwardVector = GetPawnOwner()->GetActorForwardVector();
+	const FVector RightVector = GetPawnOwner()->GetActorRightVector();
+
+	const float ForwardInput = FVector::DotProduct(WorldVector, ForwardVector);
+	const float RightInput = FVector::DotProduct(WorldVector, RightVector);
+
+	FVector InputVector = FVector(RightInput, ForwardInput, 0);
+	
 	if (IsRunningDedicatedServer())
 	{
 		Super::AddInputVector(InputVector, bForce);
@@ -43,7 +51,6 @@ void UReplicatedPawnMovementComponent::TickComponent(float DeltaTime, enum ELeve
 void UReplicatedPawnMovementComponent::Server_MovePawn(float DeltaTime)
 {
 	FVector InputVector = ConsumeInputVector();
-
 	FVector Movement = InputVector * Speed * DeltaTime;
 	FHitResult Hit;
 
@@ -55,8 +62,13 @@ void UReplicatedPawnMovementComponent::Server_MovePawn(float DeltaTime)
 	}
 
 	FVector CurrentLocation = GetActorLocation();
-	
-	Server_SetLocation(CurrentLocation);
+
+	const float LocationUpdateThreshold = 5.0f;
+	if (FVector::Dist(CurrentLocation, LastServerLocation) > LocationUpdateThreshold)
+	{
+		Server_SetLocation(CurrentLocation);
+		LastServerLocation = CurrentLocation;
+	}
 }
 
 void UReplicatedPawnMovementComponent::Server_SetLocation_Implementation(const FVector Vector)
@@ -79,6 +91,17 @@ void UReplicatedPawnMovementComponent::InterpolateLocation(float DeltaTime)
 	if (!TargetLocation.IsZero())
 	{
 		FVector CurrentLocation = GetActorLocation();
+		
+		const float DistanceToTarget = FVector::Dist(CurrentLocation, TargetLocation);
+		
+		const float SnapThreshold = 1.0f;
+		if (DistanceToTarget <= SnapThreshold)
+		{
+			GetOwner()->SetActorLocation(TargetLocation);
+			UE_LOG(LogReplicatedPawnMovementComponent, Log, TEXT("Snapping to target location: %s"), *TargetLocation.ToString());
+			return;
+		}
+
 		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, InterpSpeed);
 
 		GetOwner()->SetActorLocation(NewLocation);

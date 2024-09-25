@@ -65,6 +65,7 @@ void APlatformPawn::Move(FVector MovementInput)
 	{
 		return;
 	}
-	
+	//move only along horizontal axis
+	MovementInput.Y = 0;
 	PlatformMovementComponent->AddInputVector(MovementInput);
 }

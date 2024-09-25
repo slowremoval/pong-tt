@@ -39,9 +39,10 @@ protected:
 public:
 	UPROPERTY(EditAnywhere)
 	float Speed = 400;
+	FVector LastServerLocation;
 
 protected:
 	FVector TargetLocation;
 
-	const float InterpSpeed = 15.0f;
+	const float InterpSpeed = 21.0f;
 };
