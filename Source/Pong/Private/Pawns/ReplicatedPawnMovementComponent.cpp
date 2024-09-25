@@ -2,9 +2,20 @@
 
 DEFINE_LOG_CATEGORY(LogReplicatedPawnMovementComponent);
 
+void UReplicatedPawnMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
+{
+	if (PawnOwner->HasAuthority())
+	{
+		Super::AddInputVector(WorldVector, bForce);
+	}
+	else
+	{
+		Server_SetMovement(WorldVector, bForce);
+	}
+}
+
 void UReplicatedPawnMovementComponent::Server_SetMovement_Implementation(const FVector Movement, bool bForce)
 {
-	ConsumeInputVector();
 	Super::AddInputVector(Movement, bForce);
 }
 
@@ -13,9 +24,19 @@ bool UReplicatedPawnMovementComponent::Server_SetMovement_Validate(const FVector
 	return true;
 }
 
-void UReplicatedPawnMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
+void UReplicatedPawnMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
 {
-	Server_SetMovement(WorldVector, bForce);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (PawnOwner->HasAuthority())
+	{
+		Server_MovePawn(DeltaTime);
+	}
+	else
+	{
+		InterpolateLocation(DeltaTime);
+	}
 }
 
 void UReplicatedPawnMovementComponent::Server_MovePawn(float DeltaTime)
@@ -23,37 +44,18 @@ void UReplicatedPawnMovementComponent::Server_MovePawn(float DeltaTime)
 	FVector InputVector = ConsumeInputVector();
 
 	FVector Movement = InputVector * Speed * DeltaTime;
-
 	FHitResult Hit;
+
 	SafeMoveUpdatedComponent(Movement, UpdatedComponent->GetComponentRotation(), true, Hit);
 
 	if (Hit.IsValidBlockingHit())
 	{
 		SlideAlongSurface(Movement, 1.0f - Hit.Time, Hit.Normal, Hit);
 	}
-	Server_SetLocation(GetActorLocation());
-}
 
-void UReplicatedPawnMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (IsRunningDedicatedServer())
-	{
-		Server_MovePawn(DeltaTime);
-	}
-}
-
-void UReplicatedPawnMovementComponent::Multicast_SetLocation_Implementation(const FVector Vector)
-{
-	if (!PawnOwner->IsLocallyControlled())
-{
-	StartLocationInterpolation(Vector);
-}
-else
-{
-	GetOwner()->SetActorLocation(Vector);
-}
+	FVector CurrentLocation = GetActorLocation();
+	
+	Server_SetLocation(CurrentLocation);
 }
 
 void UReplicatedPawnMovementComponent::Server_SetLocation_Implementation(const FVector Vector)
@@ -61,36 +63,24 @@ void UReplicatedPawnMovementComponent::Server_SetLocation_Implementation(const F
 	Multicast_SetLocation(Vector);
 }
 
-bool UReplicatedPawnMovementComponent::Server_SetLocation_Validate(const FVector Vector)
+void UReplicatedPawnMovementComponent::Multicast_SetLocation_Implementation(const FVector Vector)
 {
-	return true;
+	StartLocationInterpolation(Vector);
 }
 
 void UReplicatedPawnMovementComponent::StartLocationInterpolation(const FVector NewTargetLocation)
 {
 	TargetLocation = NewTargetLocation;
-
-	GetWorld()->GetTimerManager().ClearTimer(InterpolationTimerHandle);
-
-	GetWorld()->GetTimerManager().SetTimer(InterpolationTimerHandle, this, &UReplicatedPawnMovementComponent::InterpolateLocation, InterpDuration, true);
 }
 
-void UReplicatedPawnMovementComponent::InterpolateLocation()
+void UReplicatedPawnMovementComponent::InterpolateLocation(float DeltaTime)
 {
-	AActor* Owner = GetOwner();
-	if (!Owner)
+	if (!TargetLocation.IsZero())
 	{
-		return;
-	}
+		FVector CurrentLocation = GetActorLocation();
+		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, InterpSpeed);
 
-	FVector CurrentLocation = Owner->GetActorLocation();
-
-	FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, GetWorld()->GetDeltaSeconds(), InterpSpeed);
-
-	Owner->SetActorLocation(NewLocation);
-
-	if (CurrentLocation.Equals(TargetLocation, KINDA_SMALL_NUMBER))
-	{
-		GetWorld()->GetTimerManager().ClearTimer(InterpolationTimerHandle);
+		GetOwner()->SetActorLocation(NewLocation);
+		UE_LOG(LogReplicatedPawnMovementComponent, Verbose, TEXT("Client Interpolating Position: %s -> %s"), *CurrentLocation.ToString(), *NewLocation.ToString());
 	}
 }
