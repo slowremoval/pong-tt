@@ -4,7 +4,7 @@ DEFINE_LOG_CATEGORY(LogReplicatedPawnMovementComponent);
 
 void UReplicatedPawnMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
 {
-	if (PawnOwner->HasAuthority())
+	if (IsRunningDedicatedServer())
 	{
 		Super::AddInputVector(WorldVector, bForce);
 	}
@@ -28,8 +28,8 @@ void UReplicatedPawnMovementComponent::TickComponent(float DeltaTime, enum ELeve
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (PawnOwner->HasAuthority())
+	
+	if (IsRunningDedicatedServer())
 	{
 		Server_MovePawn(DeltaTime);
 	}
@@ -81,6 +81,6 @@ void UReplicatedPawnMovementComponent::InterpolateLocation(float DeltaTime)
 		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, InterpSpeed);
 
 		GetOwner()->SetActorLocation(NewLocation);
-		UE_LOG(LogReplicatedPawnMovementComponent, Verbose, TEXT("Client Interpolating Position: %s -> %s"), *CurrentLocation.ToString(), *NewLocation.ToString());
+		UE_LOG(LogReplicatedPawnMovementComponent, Log, TEXT("Client Interpolating Position: %s -> %s"), *CurrentLocation.ToString(), *NewLocation.ToString());
 	}
 }

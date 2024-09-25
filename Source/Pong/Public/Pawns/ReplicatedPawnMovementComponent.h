@@ -43,5 +43,5 @@ public:
 protected:
 	FVector TargetLocation;
 
-	const float InterpSpeed = 13.0f;
+	const float InterpSpeed = 15.0f;
 };
