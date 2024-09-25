@@ -42,4 +42,8 @@ private:
 	void Multicast_SetBallVelocity(const FVector& NewVelocity);
 
 	void SetBallVelocityLocally(const FVector& NewVelocity);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetBallPositionAndVelocity(const FVector& NewLocation, const FVector& NewVelocity);
+	
 };
