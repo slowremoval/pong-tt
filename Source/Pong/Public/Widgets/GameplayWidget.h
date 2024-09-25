@@ -19,7 +19,9 @@ public:
 	
 	UFUNCTION()
 	void InitializeBindings();
-	
+	UFUNCTION()
+	void CheckIfGameStarted();
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Player1ScoreText;
 
@@ -28,13 +30,14 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> MessageText;
+	FTimerHandle GameStartCheckTimerHandle;
+	FTimerHandle GameStartTimerHandle;
 
 	UFUNCTION()
 	void UpdatePlayerScore(int32 Player1Score, int32 Player2Score);
 
 	UFUNCTION()
 	void UpdateMessage(const FString& NewMessage);
-
 protected:
 	TObjectPtr<AGameplayState> GameState;
 

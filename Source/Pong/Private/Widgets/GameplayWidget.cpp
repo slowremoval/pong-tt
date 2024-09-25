@@ -14,12 +14,15 @@ void UGameplayWidget::InitializeBindings()
 		GameState->ScoreUpdatedDelegate.BindDynamic(this, &UGameplayWidget::HandleScoreUpdated);
 		GameState->GameStartedDelegate.AddDynamic(this, &UGameplayWidget::HandleGameStarted);
 	}
+	GetWorld()->GetTimerManager().SetTimer(GameStartTimerHandle, this, &UGameplayWidget::CheckIfGameStarted, 1.0f, false);
+}
 
+void UGameplayWidget::CheckIfGameStarted()
+{
 	if (GameState->GetGameStarted())
 	{
 		HandleGameStarted();
 	}
-	
 }
 
 void UGameplayWidget::NativeConstruct()

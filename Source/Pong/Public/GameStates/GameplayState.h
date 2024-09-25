@@ -20,7 +20,7 @@ public:
 	
 	FOnScoreUpdated ScoreUpdatedDelegate;
 	FOnGameStarted GameStartedDelegate;
-	
+
 private:
 	UFUNCTION()
 	void UpdateScore(int32 GateIndex);
@@ -41,11 +41,8 @@ protected:
 	
 public:
 
-	bool GetGameStarted() const
-	{
-		return bGameStarted;
-	}
-	
+	bool GetGameStarted();
+
 	UFUNCTION(Server, Reliable)
 	void Server_GameStarted();
 	

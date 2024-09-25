@@ -1,5 +1,8 @@
 #include "GameStates/GameplayState.h"
 
+#include "GameActors/ReplicatedBall.h"
+#include "Kismet/GameplayStatics.h"
+
 AGameplayState::AGameplayState()
 {
 	GateScores = TMap<int32, int32>();
@@ -18,6 +21,24 @@ void AGameplayState::UpdateScore(int32 GateIndex)
 	}
 }
 
+bool AGameplayState::GetGameStarted()
+{
+	if (!bGameStarted)
+	{
+		TArray<AActor*> FoundPawns;
+
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AReplicatedBall::StaticClass(), FoundPawns);
+
+		if (FoundPawns.Num() > 0)
+		{
+			Server_GameStarted();
+			return true;
+		}
+	}
+
+	return bGameStarted;
+}
+
 void AGameplayState::Multicast_GameStarted_Implementation()
 {
 	bGameStarted = true;
@@ -26,6 +47,7 @@ void AGameplayState::Multicast_GameStarted_Implementation()
 
 void AGameplayState::Server_GameStarted_Implementation()
 {
+	bGameStarted = true;
 	Multicast_GameStarted();
 }
 

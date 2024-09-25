@@ -49,7 +49,7 @@ AActor* ABaseGameplayGM::ChoosePlayerStart_Implementation(AController* Player)
 void ABaseGameplayGM::BeginPlay()
 {
     Super::BeginPlay();
-
+	
 	CurrentGameState = GetGameState<AGameplayState>();
 	
     TArray<AActor*> FoundGates;
@@ -82,6 +82,7 @@ void ABaseGameplayGM::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
+		CurrentGameState->Server_GameStarted();
     Multicast_PlayerJoined(NewPlayer);
 }
 
@@ -107,6 +108,7 @@ void ABaseGameplayGM::SpawnBallInCenter()
 void ABaseGameplayGM::Server_SpawnBallInCenter_Implementation()
 {
 	Multicast_SpawnBallInCenter();
+	CurrentGameState->Server_GameStarted();
 }
 
 void ABaseGameplayGM::Multicast_SpawnBallInCenter_Implementation()
