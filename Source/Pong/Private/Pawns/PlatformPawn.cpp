@@ -1,44 +1,18 @@
 #include "Pawns/PlatformPawn.h"
 
 #include "Camera/CameraComponent.h"
-#include "Pawns/ReplicatedPawnMovementComponent.h"
 
 APlatformPawn::APlatformPawn()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
-	PlatformMovementComponent = CreateDefaultSubobject<UReplicatedPawnMovementComponent>(
-		TEXT("ReplicatedPawnMovementComponent"));
+	bReplicates = true;
+	SetReplicatingMovement(true);
 
 	USceneComponent* RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	RootComponent = RootComp;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-}
-
-void APlatformPawn::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-
-	FVector NewLocation = GetActorLocation();
-
-	NewLocation.Y = FMath::Clamp(NewLocation.Y, -MovementBoundary, MovementBoundary);
-
-	SetActorLocation(NewLocation);
-
-#pragma region LookAtPlayer
-	// FVector PawnLocation = GetActorLocation();
-	//
-	// FVector DirectionToPawn = PawnLocation - CameraComponent->GetComponentLocation();
-	//
-	// FRotator TargetLookAtRotation = FRotationMatrix::MakeFromX(DirectionToPawn).Rotator();
-	//
-	// float InterpSpeed = 0.9f;  
-	// FRotator SmoothRotation = FMath::RInterpTo(CameraComponent->GetComponentRotation(), TargetLookAtRotation, DeltaSeconds, InterpSpeed);
-	//
-	// CameraComponent->SetWorldRotation(SmoothRotation);
-#pragma endregion LookAtPlayer
 }
 
 void APlatformPawn::BeginPlay()
@@ -48,30 +22,76 @@ void APlatformPawn::BeginPlay()
 	const FVector ActorLocation = GetActorLocation();
 	const FVector ForwardVector = GetActorForwardVector();
 
-	const FVector Offset = FVector(2550.0f, 0.0f, 4200.0f);
-
-	const FVector CameraWorldLocation = ActorLocation - (ForwardVector * Offset.X) + FVector(0.0f, 0, Offset.Z);
-
+	const FVector CameraWorldLocation = ActorLocation - (ForwardVector * CameraOffsetX) + FVector(0.0f, 0.0f, CameraOffsetZ);
 	CameraComponent->SetWorldLocation(CameraWorldLocation);
 
 	const FVector DirectionToPawn = ActorLocation - CameraComponent->GetComponentLocation();
-
 	const FRotator TargetLookAtRotation = FRotationMatrix::MakeFromX(DirectionToPawn).Rotator();
 	CameraComponent->SetWorldRotation(TargetLookAtRotation);
 }
 
+void APlatformPawn::CalculateRelativeMovementDirection(FVector MovementInput, FVector& FinalMovementDirection)
+{
+	const FVector ForwardVector = GetActorForwardVector();
+	const FVector RightVector = GetActorRightVector();
+
+	const float ForwardInput = FVector::DotProduct(MovementInput, ForwardVector);
+	const float RightInput = FVector::DotProduct(MovementInput, RightVector);
+
+	FVector InputVector = FVector(RightInput, ForwardInput, 0.0f);
+	InputVector *= MovementSpeed * GetWorld()->GetDeltaSeconds();
+
+	FinalMovementDirection = InputVector;
+}
+
 void APlatformPawn::Move(FVector MovementInput)
 {
-	if (!IsValid(PlatformMovementComponent))
-	{
-		return;
-	}
 	if (MovementInput.IsNearlyZero())
 	{
 		return;
 	}
-	//move only along horizontal axis
+
 	MovementInput.Y = 0;
-	
-	PlatformMovementComponent->AddInputVector(MovementInput);
+
+	FVector FinalMovementDirection;
+	CalculateRelativeMovementDirection(MovementInput, FinalMovementDirection);
+
+	if (HasAuthority())
+	{
+		FVector NewLocation = GetActorLocation() + FinalMovementDirection;
+		ClampMovement(NewLocation);
+		SetActorLocation(NewLocation);
+		Multicast_Move(NewLocation); 
+	}
+	else
+	{
+		Server_Move(FinalMovementDirection);
+	}
+}
+
+void APlatformPawn::ClampMovement(FVector& NewLocation)
+{
+	NewLocation.Y = FMath::Clamp(NewLocation.Y, -MovementBoundary, MovementBoundary);
+}
+
+void APlatformPawn::Server_Move_Implementation(FVector MovementInput)
+{
+	FVector NewLocation = GetActorLocation() + MovementInput;
+	ClampMovement(NewLocation);
+	SetActorLocation(NewLocation);
+
+	Multicast_Move(NewLocation);
+}
+
+bool APlatformPawn::Server_Move_Validate(FVector MovementInput)
+{
+	return true;
+}
+
+void APlatformPawn::Multicast_Move_Implementation(FVector NewLocation)
+{
+	if (!HasAuthority())
+	{
+		SetActorLocation(NewLocation);
+	}
 }

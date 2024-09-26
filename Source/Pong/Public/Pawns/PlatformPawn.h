@@ -15,26 +15,38 @@ UCLASS()
 class PONG_API APlatformPawn : public APawn
 {
 	GENERATED_BODY()
-	
+
 public:
 	APlatformPawn();
-
-	virtual void Tick(float DeltaSeconds) override;
 
 	void Move(FVector MovementInput);
 
 protected:
 	virtual void BeginPlay() override;
 
+	void CalculateRelativeMovementDirection(FVector MovementInput, FVector& FinalMovementDirection);
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UReplicatedPawnMovementComponent> PlatformMovementComponent;
+	UCameraComponent* CameraComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> CameraComponent;
-	
 	UPROPERTY(EditAnywhere, Category = "Movement Boundaries", meta = (ClampMin = -5000, ClampMax = 5000))
 	float MovementBoundary = 1700.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (ClampMin = 0, AllowPrivateAccess = "true"))
+	float MovementSpeed = 3000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	float CameraOffsetX = 2550.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	float CameraOffsetZ = 4200.0f;
+
 	void ClampMovement(FVector& NewLocation);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_Move(FVector MovementInput);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Move(FVector NewLocation);
 };
