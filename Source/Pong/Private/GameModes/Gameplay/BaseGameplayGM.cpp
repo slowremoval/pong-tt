@@ -28,29 +28,28 @@ void ABaseGameplayGM::BeginPlay()
 void ABaseGameplayGM::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-
 	Multicast_PlayerJoined(NewPlayer);
 }
 
 void ABaseGameplayGM::Multicast_PlayerJoined_Implementation(APlayerController* NewPlayer)
 {
-	int32 Count = 0;
+	int32 PlayerCount = 0;
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
-		++Count;
+		++PlayerCount; 
 	}
 	
-	JoinedPlayers = Count;
+	JoinedPlayers = PlayerCount;
 	
-	if (Count >= TargetPlayerCount && !bGameStarted)
+	if (PlayerCount >= TargetPlayerCount && !bGameStarted)
 	{
 		bGameStarted = true;
 		if (CurrentGameState)
 		{
-			CurrentGameState->Multicast_GameStarted();
+			CurrentGameState->Multicast_GameStarted(); 
 		}
 
-		Server_SpawnBallInCenter();
+		Server_SpawnBallInCenter(); 
 	}
 }
 
@@ -74,7 +73,7 @@ AActor* ABaseGameplayGM::ChoosePlayerStart_Implementation(AController* Player)
 APawn* ABaseGameplayGM::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform)
 {
 	UClass* PawnClass = GetDefaultPawnClassForController(NewPlayer);
-	if (PawnClass)
+	if (IsValid(PawnClass))
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -93,32 +92,29 @@ void ABaseGameplayGM::SpawnBallInCenter()
 		{
 			SpawnedBall->Destroy();
 		}
-
-		FVector SpawnLocation = FVector(0.0f, 0.0f, 400.0f);
-		FRotator SpawnRotation = FRotator::ZeroRotator;
+		
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
-
-		SpawnedBall = GetWorld()->SpawnActor<AActor>(BallClass, SpawnLocation, SpawnRotation, SpawnParams);
+		SpawnedBall = GetWorld()->SpawnActor<AActor>(BallClass, BallSpawnLocation, BallSpawnRotation, SpawnParams);
 	}
 }
 
 void ABaseGameplayGM::Server_SpawnBallInCenter_Implementation()
 {
-	Multicast_SpawnBallInCenter();
+	Multicast_SpawnBallInCenter();  
 }
 
 void ABaseGameplayGM::Multicast_SpawnBallInCenter_Implementation()
 {
-	SpawnBallInCenter();
+	SpawnBallInCenter(); 
 }
 
 void ABaseGameplayGM::OnGoalScored(int32 GateIndex)
 {
 	if (CurrentGameState)
 	{
-		CurrentGameState->Multicast_UpdateScore(GateIndex);
+		CurrentGameState->Multicast_UpdateScore(GateIndex); 
 	}
 
-	SpawnBallInCenter();
+	SpawnBallInCenter();  
 }

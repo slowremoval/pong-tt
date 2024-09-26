@@ -32,7 +32,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
 	bool bGameStarted = false;
-
+	
+	const FVector BallSpawnLocation = FVector(0.0f, 0.0f, 400.0f);
+	const FRotator BallSpawnRotation = FRotator::ZeroRotator; 
+	const int32 DefaultTargetPlayerCount = 2;
+	
 	TArray<AActor*> UsedPlayerStarts;
 
 public:
