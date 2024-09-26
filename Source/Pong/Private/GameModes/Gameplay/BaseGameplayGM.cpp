@@ -34,9 +34,15 @@ void ABaseGameplayGM::PostLogin(APlayerController* NewPlayer)
 
 void ABaseGameplayGM::Multicast_PlayerJoined_Implementation(APlayerController* NewPlayer)
 {
-	++JoinedPlayers;
-
-	if (JoinedPlayers >= TargetPlayerCount && !bGameStarted)
+	int32 Count = 0;
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		++Count;
+	}
+	
+	JoinedPlayers = Count;
+	
+	if (Count >= TargetPlayerCount && !bGameStarted)
 	{
 		bGameStarted = true;
 		if (CurrentGameState)
