@@ -43,11 +43,6 @@ private:
 
 	FVector TargetPosition;
 
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_SetBallState(const FVector& NewLocation, const FVector& NewVelocity);
-
-	void InterpolatePosition(float DeltaTime);
-
 	void SetBallVelocityLocally(const FVector& NewVelocity);
 	
 	void RandomizeBallInitialVelocity();
