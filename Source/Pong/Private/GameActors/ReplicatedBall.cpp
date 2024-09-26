@@ -16,6 +16,7 @@ namespace BallConstants
     const float MinImpactThreshold = 0.0f;
 }
 
+
 void AReplicatedBall::RandomizeBallInitialVelocity()
 {
     const FVector ForwardVector = GetActorForwardVector().GetSafeNormal();
@@ -72,19 +73,6 @@ void AReplicatedBall::BeginPlay()
     }
 }
 
-void AReplicatedBall::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-
-    if (HasAuthority())
-    {
-        FVector Velocity = BallMesh->GetPhysicsLinearVelocity();
-        Velocity = Velocity.GetClampedToMaxSize(BallSpeed);
-        BallMesh->SetPhysicsLinearVelocity(Velocity);
-
-        BallVelocity = Velocity;
-    }
-}
 
 void AReplicatedBall::OnBallHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                                 FVector NormalImpulse, const FHitResult& Hit)
